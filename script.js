@@ -110,3 +110,144 @@ function finish() {
     document.getElementById("analysis").innerHTML =
         top.map(t => `<h3>${t}型解析</h3><p>${detail[t]}</p>`).join("");
 }
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>心理測驗</title>
+<style>
+  body { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial; background:#f5f5f5; padding:20px;}
+  .container { max-width:600px; margin:auto; }
+  .card { background:white; border-radius:12px; padding:20px; margin-bottom:20px; box-shadow:0 2px 6px rgba(0,0,0,0.1);}
+  .btn { background:#1976d2; color:white; border:none; padding:10px 15px; border-radius:8px; cursor:pointer;}
+  .btn:disabled { background:#aaa; cursor:default;}
+  .progress-bar { background:#ddd; border-radius:8px; height:16px; overflow:hidden; margin-bottom:20px;}
+  .progress-fill { height:100%; width:0%; background:#1976d2; transition: width 0.3s;}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>心理測驗</h1>
+  <div class="progress-bar">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <div id="quizContainer" class="card">
+    <!-- 題目會在這裡生成 -->
+  </div>
+
+  <button id="nextBtn" class="btn" disabled>下一題</button>
+
+  <div id="resultContainer" class="card" style="display:none;">
+    <h2>測驗結果</h2>
+    <canvas id="radarChart" width="400" height="400"></canvas>
+    <div id="explanation" style="margin-top:15px;"></div>
+    <button id="downloadBtn" class="btn">下載圖表</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const questions = [
+  { text: "當你遇到新的挑戰，你會？", choices:["馬上試","先觀察","猶豫準備","幫助他人"], key:'A' },
+  { text: "朋友需要幫忙，你會？", choices:["鼓勵","安靜傾聽","退縮","提供後勤"], key:'B' },
+  { text: "思考人生方向，你偏好？", choices:["立刻行動","深入分析","小心慢走","互相支持"], key:'C' },
+  { text: "面對失敗，你最可能？", choices:["再戰","反省","退縮","尋求支持"], key:'D' },
+  { text: "你最看重的特質？", choices:["冒險/行動力","思考深度","謹慎/安全感","溫暖/支持他人"], key:'D' }
+];
+
+const types = ['馬型','男孩型','狐狸型','鼴鼠型'];
+const explanations = {
+  "馬型":"你習慣當那個「載大家走過去」的人，會先撐住局面，也會累，但依然勇敢向前...",
+  "男孩型":"你還在學著相信自己，有強烈感受力，容易看到別人情緒，也忽略自己需求...",
+  "狐狸型":"你敏銳細心，習慣把心收好，忠誠且有義氣，但保持界線，不輕易交付自己...",
+  "鼴鼠型":"你很重視舒適感與陪伴，溫柔體貼，給人安全感，也需要學會照顧自己..."
+};
+
+let currentQ = 0;
+let answers = [];
+
+function renderQuestion(){
+  const q = questions[currentQ];
+  let html = `<p>${q.text}</p>`;
+  q.choices.forEach((c,i)=>{
+    html += `<label><input type="radio" name="answer" value="${i}"> ${c}</label><br>`;
+  });
+  document.getElementById('quizContainer').innerHTML = html;
+  document.getElementById('nextBtn').disabled = true;
+
+  // 監聽選擇
+  document.querySelectorAll('input[name="answer"]').forEach(inp=>{
+    inp.addEventListener('change', ()=>{ document.getElementById('nextBtn').disabled = false; });
+  });
+
+  // 更新進度
+  const percent = (currentQ / questions.length) * 100;
+  document.getElementById('progressFill').style.width = percent + '%';
+}
+
+document.getElementById('nextBtn').addEventListener('click', ()=>{
+  const selected = document.querySelector('input[name="answer"]:checked');
+  if(selected) {
+    answers.push(parseInt(selected.value));
+    currentQ++;
+    if(currentQ < questions.length){
+      renderQuestion();
+    } else {
+      showResult();
+    }
+  }
+});
+
+function showResult(){
+  document.getElementById('quizContainer').style.display = 'none';
+  document.getElementById('nextBtn').style.display = 'none';
+  document.getElementById('progressFill').style.width = '100%';
+  document.getElementById('resultContainer').style.display = 'block';
+
+  // 計算類型 (簡單示範，每個題目對應一種人格)
+  let scores = { '馬型':0,'男孩型':0,'狐狸型':0,'鼴鼠型':0 };
+  answers.forEach((a,i)=>{
+    const type = types[a]; 
+    scores[type]++;
+  });
+
+  const data = {
+    labels: types,
+    datasets: [{
+      label: '人格特質分數',
+      data: types.map(t=>scores[t]),
+      fill:true,
+      backgroundColor:'rgba(25,118,210,0.2)',
+      borderColor:'rgba(25,118,210,1)',
+      pointBackgroundColor:'rgba(25,118,210,1)'
+    }]
+  };
+
+  const config = {
+    type:'radar',
+    data:data,
+    options:{ scales:{ r:{ beginAtZero:true, max:questions.length } } }
+  };
+
+  const ctx = document.getElementById('radarChart').getContext('2d');
+  const radarChart = new Chart(ctx, config);
+
+  // 顯示解析
+  const mainType = Object.keys(scores).reduce((a,b)=> scores[a]>=scores[b]?a:b );
+  document.getElementById('explanation').innerText = explanations[mainType];
+
+  // 下載圖表
+  document.getElementById('downloadBtn').addEventListener('click', ()=>{
+    const link = document.createElement('a');
+    link.href = radarChart.toBase64Image();
+    link.download = 'radar_chart.png';
+    link.click();
+  });
+}
+
+// 初始渲染
+renderQuestion();
+</script>
+</body>
+</html>
