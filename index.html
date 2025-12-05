@@ -1,25 +1,38 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta charset="UTF-8">
-<title>四型心理測驗</title>
-<link rel="stylesheet" href="style.css">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>角色心理測驗</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
-<h2>四型心理測驗</h2>
+<div class="container">
 
-<div id="question-box" class="card">
-    <h3 id="question"></h3>
-    <div id="options"></div>
-</div>
+    <h1>角色心理測驗</h1>
 
-<div id="result" class="card">
-    <h2>你的結果</h2>
-    <canvas id="radar" width="400" height="400"></canvas>
-    <button id="downloadBtn">下載結果圖</button>
-    <div id="finalType" class="card"></div>
-    <div id="analysis" class="card"></div>
+    <!-- 進度條 -->
+    <div class="progress-container">
+        <div id="progress-bar" class="progress-bar"></div>
+    </div>
+
+    <!-- 題目區 -->
+    <div id="quiz-area"></div>
+
+    <!-- 結果區 -->
+    <div id="result" style="display:none;">
+        <h2>測驗結果</h2>
+        <canvas id="radarChart" width="350" height="350"></canvas>
+        <br>
+        <button id="download-btn">下載結果圖</button>
+        <button onclick="restartQuiz()">重新測驗</button>
+
+        <h2>你的解析</h2>
+        <div id="analysis"></div>
+    </div>
+
 </div>
 
 <script src="script.js"></script>
