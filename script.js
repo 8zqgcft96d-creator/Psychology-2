@@ -226,4 +226,8 @@ function restartQuiz() {
     loadQuestion();
     updateProgress();
 }
+function startQuiz() {
+    document.getElementById('cover').style.display = 'none';
+    document.getElementById('quizContainer').style.display = 'block';
+}
 
